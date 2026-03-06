@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alt+Zac — At Work</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0d1117;
+      font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+      color: #e6edf3;
+      position: relative;
+    }
+
+    /* Subtle grid background */
+    body::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(88, 166, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(88, 166, 255, 0.03) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none;
+    }
+
+    /* Radial glow behind the card */
+    body::after {
+      content: '';
+      position: absolute;
+      width: 800px;
+      height: 800px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(88, 166, 255, 0.06) 0%, transparent 70%);
+      pointer-events: none;
+      animation: breathe 8s ease-in-out infinite;
+    }
+
+    @keyframes breathe {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.15); opacity: 0.7; }
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2.5rem;
+    }
+
+    /* Terminal window */
+    .terminal {
+      width: 640px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow:
+        0 0 0 1px rgba(88, 166, 255, 0.05),
+        0 8px 40px rgba(0, 0, 0, 0.4),
+        0 0 120px rgba(88, 166, 255, 0.04);
+    }
+
+    .terminal-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 16px;
+      background: #1c2128;
+      border-bottom: 1px solid #30363d;
+    }
+
+    .terminal-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .dot-red { background: #ff5f57; }
+    .dot-yellow { background: #febc2e; }
+    .dot-green { background: #28c840; }
+
+    .terminal-title {
+      flex: 1;
+      text-align: center;
+      font-size: 0.75rem;
+      color: #484f58;
+      letter-spacing: 0.02em;
+    }
+
+    .terminal-body {
+      padding: 1.25rem 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.8;
+    }
+
+    .prompt-path { color: #58a6ff; }
+    .prompt-symbol { color: #7ee787; }
+
+    .command {
+      color: #e6edf3;
+      font-weight: 500;
+    }
+
+    .output {
+      color: #8b949e;
+      font-size: 0.8rem;
+    }
+
+    .line {
+      display: flex;
+      gap: 0.5ch;
+      flex-wrap: wrap;
+    }
+
+    .status-line {
+      display: flex;
+      align-items: center;
+      gap: 0.75ch;
+      margin-top: 0.5rem;
+    }
+
+    .spinner {
+      display: inline-block;
+      color: #d2a8ff;
+    }
+
+    .spinner::after {
+      content: '\2839';
+      animation: braille-spin 0.8s linear infinite;
+    }
+
+    @keyframes braille-spin {
+      0%   { content: '\280B'; }
+      12%  { content: '\2819'; }
+      25%  { content: '\2839'; }
+      37%  { content: '\2838'; }
+      50%  { content: '\283C'; }
+      62%  { content: '\2834'; }
+      75%  { content: '\2826'; }
+      87%  { content: '\2827'; }
+    }
+
+    .active-text { color: #d2a8ff; }
+
+    .cursor {
+      display: inline-block;
+      width: 8px;
+      height: 1.1em;
+      background: #e6edf3;
+      vertical-align: text-bottom;
+      animation: blink 1s steps(1) infinite;
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+
+    .tool-call {
+      color: #7ee787;
+      font-size: 0.8rem;
+    }
+
+    .tool-file { color: #ffa657; }
+    .dim { color: #484f58; }
+
+    .cost-line {
+      color: #484f58;
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+    }
+
+    /* Cycling status messages */
+    .cycle-text {
+      display: inline;
+    }
+
+    .cycle-text .msg {
+      display: none;
+      color: #d2a8ff;
+    }
+
+    .cycle-text .msg:nth-child(1) { animation: show-msg 20s infinite; }
+    .cycle-text .msg:nth-child(2) { animation: show-msg 20s 5s infinite; }
+    .cycle-text .msg:nth-child(3) { animation: show-msg 20s 10s infinite; }
+    .cycle-text .msg:nth-child(4) { animation: show-msg 20s 15s infinite; }
+
+    @keyframes show-msg {
+      0%, 2%  { display: inline; opacity: 0; }
+      5%, 20% { display: inline; opacity: 1; }
+      23%, 25% { display: inline; opacity: 0; }
+      25.1%, 100% { display: none; opacity: 0; }
+    }
+
+    /* Cycling completed tool lines */
+    .tool-lines .tool-set {
+      display: none;
+    }
+
+    .tool-lines .tool-set:nth-child(1) { animation: show-tools 20s infinite; }
+    .tool-lines .tool-set:nth-child(2) { animation: show-tools 20s 5s infinite; }
+    .tool-lines .tool-set:nth-child(3) { animation: show-tools 20s 10s infinite; }
+    .tool-lines .tool-set:nth-child(4) { animation: show-tools 20s 15s infinite; }
+
+    @keyframes show-tools {
+      0%, 2%  { display: block; opacity: 0; }
+      5%, 20% { display: block; opacity: 1; }
+      23%, 25% { display: block; opacity: 0; }
+      25.1%, 100% { display: none; opacity: 0; }
+    }
+
+    /* Identity section below terminal */
+    .identity {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .identity-icon {
+      font-size: 3.5rem;
+      filter: drop-shadow(0 0 20px rgba(88, 166, 255, 0.15));
+    }
+
+    .identity-name {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #e6edf3, #58a6ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .identity-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: #8b949e;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #7ee787;
+      box-shadow: 0 0 8px rgba(126, 231, 135, 0.4);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(126, 231, 135, 0.4); }
+      50% { opacity: 0.6; box-shadow: 0 0 16px rgba(126, 231, 135, 0.6); }
+    }
+
+    .identity-tagline {
+      font-size: 0.7rem;
+      color: #484f58;
+      font-style: italic;
+      margin-top: 0.25rem;
+    }
+
+    /* Floating file badges */
+    .file-badge {
+      position: absolute;
+      font-size: 0.65rem;
+      color: #484f58;
+      background: rgba(22, 27, 34, 0.8);
+      border: 1px solid #21262d;
+      border-radius: 6px;
+      padding: 4px 10px;
+      white-space: nowrap;
+      animation: float 6s ease-in-out infinite;
+    }
+
+    .file-badge:nth-child(1) { top: 8%; left: 6%; animation-delay: 0s; }
+    .file-badge:nth-child(2) { top: 15%; right: 8%; animation-delay: 1.5s; }
+    .file-badge:nth-child(3) { bottom: 20%; left: 5%; animation-delay: 3s; }
+    .file-badge:nth-child(4) { bottom: 12%; right: 6%; animation-delay: 4.5s; }
+    .file-badge:nth-child(5) { top: 40%; left: 3%; animation-delay: 2s; }
+    .file-badge:nth-child(6) { top: 35%; right: 4%; animation-delay: 0.8s; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); opacity: 0.4; }
+      50% { transform: translateY(-8px); opacity: 0.7; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Ambient floating file badges -->
+  <div class="file-badge">Reading source files</div>
+  <div class="file-badge">Editing services</div>
+  <div class="file-badge">Running tests</div>
+  <div class="file-badge">Searching codebase</div>
+  <div class="file-badge">Querying database</div>
+  <div class="file-badge">Analyzing patterns</div>
+
+  <div class="container">
+    <div class="terminal">
+      <div class="terminal-header">
+        <div class="terminal-dot dot-red"></div>
+        <div class="terminal-dot dot-yellow"></div>
+        <div class="terminal-dot dot-green"></div>
+        <div class="terminal-title">claude — zsh — 120x40</div>
+      </div>
+      <div class="terminal-body">
+        <div class="line">
+          <span class="prompt-path">~/projects</span>
+          <span class="prompt-symbol">$</span>
+          <span class="command">claude</span>
+        </div>
+
+        <div style="margin-top: 0.75rem;">
+          <div class="output dim">╭──────────────────────────────────────────╮</div>
+          <div class="output dim">│  <span style="color: #d2a8ff;">Claude Code</span> <span style="color: #484f58;">v1.0.33</span>  <span style="color: #484f58;">· opus-4-6</span>         │</div>
+          <div class="output dim">╰──────────────────────────────────────────╯</div>
+        </div>
+
+        <div style="margin-top: 0.75rem;">
+          <div class="line">
+            <span class="prompt-symbol">></span>
+            <span class="command" style="color: #c9d1d9;">working on something awesome...</span>
+          </div>
+        </div>
+
+        <!-- Cycling tool call groups -->
+        <div class="tool-lines" style="margin-top: 0.75rem;">
+          <div class="tool-set">
+            <div class="line"><span class="tool-call">  Read</span> <span class="tool-file">src/services/core.ts</span></div>
+            <div class="line"><span class="tool-call">  Edit</span> <span class="tool-file">src/services/core.ts</span> <span class="dim">+38 -12</span></div>
+            <div class="line"><span class="tool-call">  Bash</span> <span class="output">npm run build</span> <span style="color: #7ee787;">✓</span></div>
+          </div>
+          <div class="tool-set">
+            <div class="line"><span class="tool-call">  Grep</span> <span class="tool-file">handleRequest</span> <span class="dim">12 results</span></div>
+            <div class="line"><span class="tool-call">  Read</span> <span class="tool-file">src/routes/index.ts</span></div>
+            <div class="line"><span class="tool-call">  Edit</span> <span class="tool-file">src/routes/index.ts</span> <span class="dim">+24 -3</span></div>
+          </div>
+          <div class="tool-set">
+            <div class="line"><span class="tool-call">  Glob</span> <span class="tool-file">**/*.test.ts</span> <span class="dim">8 files</span></div>
+            <div class="line"><span class="tool-call">  Bash</span> <span class="output">npm test</span> <span style="color: #7ee787;">✓ 47 passing</span></div>
+            <div class="line"><span class="tool-call">  Write</span> <span class="tool-file">src/utils/helpers.ts</span></div>
+          </div>
+          <div class="tool-set">
+            <div class="line"><span class="tool-call">  Read</span> <span class="tool-file">src/models/entity.ts</span></div>
+            <div class="line"><span class="tool-call">  Query</span> <span class="output">SELECT * FROM migrations</span> <span style="color: #7ee787;">✓</span></div>
+            <div class="line"><span class="tool-call">  Edit</span> <span class="tool-file">src/models/entity.ts</span> <span class="dim">+15 -7</span></div>
+          </div>
+        </div>
+
+        <!-- Cycling active status messages -->
+        <div class="status-line">
+          <span class="spinner"></span>
+          <span class="cycle-text">
+            <span class="msg">Refactoring service layer...</span>
+            <span class="msg">Optimizing database queries...</span>
+            <span class="msg">Writing unit tests...</span>
+            <span class="msg">Updating type definitions...</span>
+          </span>
+          <span class="cursor"></span>
+        </div>
+
+        <div class="cost-line">$ 1.24 · 28 tool calls · 8m 47s</div>
+      </div>
+    </div>
+
+    <div class="identity">
+      <div class="identity-icon">👾</div>
+      <div class="identity-name">Alt+Zac</div>
+      <div class="identity-status">
+        <div class="status-dot"></div>
+        actively working
+      </div>
+      <div class="identity-tagline">Still Zac's intent, just faster fingers.</div>
+    </div>
+  </div>
+</body>
+</html>
