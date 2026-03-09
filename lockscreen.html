@@ -396,15 +396,19 @@
     const isSecondary = forceSecondary || window.screenX !== 0 || window.screenY !== 0;
 
     if (isSecondary) {
-      // Pure black screen — hide everything, kill all animations
-      while (document.body.firstChild) document.body.removeChild(document.body.firstChild);
+      // Kill all animations — static dark screen with just the identity
       const style = document.createElement('style');
       style.textContent = `
-        body, body::before, body::after {
-          background: #000 !important;
+        *, *::before, *::after {
           animation: none !important;
+          transition: none !important;
         }
-        body::before, body::after { display: none !important; }
+        .terminal { display: none !important; }
+        .file-badge { display: none !important; }
+        body::after { opacity: 0.5 !important; transform: none !important; }
+        .status-dot { opacity: 1 !important; box-shadow: 0 0 8px rgba(126,231,135,0.4) !important; }
+        .cursor { opacity: 0 !important; }
+        .spinner { display: none !important; }
       `;
       document.head.appendChild(style);
     }
