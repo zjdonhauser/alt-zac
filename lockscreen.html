@@ -387,5 +387,31 @@
       <div class="identity-tagline">Still Zac's intent, just faster fingers.</div>
     </div>
   </div>
+  <script>
+    // Detect secondary displays and go static to prevent GPU flicker.
+    // Primary display has screenX/screenY at 0,0; secondary is offset.
+    // Also support ?secondary query param as manual override.
+    const params = new URLSearchParams(window.location.search);
+    const forceSecondary = params.get('secondary') === 'true';
+    const isSecondary = forceSecondary || window.screenX !== 0 || window.screenY !== 0;
+
+    if (isSecondary) {
+      // Kill all animations — static dark screen with just the identity
+      const style = document.createElement('style');
+      style.textContent = `
+        *, *::before, *::after {
+          animation: none !important;
+          transition: none !important;
+        }
+        .terminal { display: none !important; }
+        .file-badge { display: none !important; }
+        body::after { opacity: 0.5 !important; transform: none !important; }
+        .status-dot { opacity: 1 !important; box-shadow: 0 0 8px rgba(126,231,135,0.4) !important; }
+        .cursor { opacity: 0 !important; }
+        .spinner { display: none !important; }
+      `;
+      document.head.appendChild(style);
+    }
+  </script>
 </body>
 </html>
